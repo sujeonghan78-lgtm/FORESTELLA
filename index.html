@@ -313,6 +313,7 @@ var state = {
   placedWords: [],
   shuffledWords: [],
   completedLines: {},
+  revealOrder: [0, 1, 2, 3, 4, 5], // 기본값 추가
 };
 
 /* -- Init -- */
@@ -320,6 +321,7 @@ function init() {
   // 배경 적용
   document.getElementById('main-bg').style.backgroundImage = 'url(' + SELECTED_BG + ')';
   document.getElementById('final-image').src = SELECTED_BG;
+  state.revealOrder = shuffle([0, 1, 2, 3, 4, 5]);
   
   initTabs();
   loadLine(0);
