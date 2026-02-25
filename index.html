@@ -703,7 +703,6 @@ function setupDragSource(el) {
 }
 
 function startDrag(e) {
-  if (el.classList.contains('used')) return;
   const el = e.currentTarget;
   if (el.classList.contains('used')) return;
   e.preventDefault();
