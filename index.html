@@ -479,14 +479,18 @@ function updateProgress() {
   
   // Grid Reveal
   var blocks = document.querySelectorAll('.grid-block');
-  for (var i = 0; i < blocks.length; i++) {
-    if (i < n) {
-      blocks[i].classList.add('revealed');
+  blocks.forEach(function(b) { b.classList.remove('revealed'); });
+  
+  for (var i = 0; i < n; i++) {
+    var targetIndex = state.revealOrder[i];
+    if (blocks[targetIndex]) {
+      blocks[targetIndex].classList.add('revealed');
     }
   }
 }
 
 function showComplete() {
+  document.getElementById('final-image').src = SELECTED_BG;
   document.getElementById('screen-game').style.display = 'none';
   document.getElementById('screen-done').classList.add('visible');
   spawnBigConfetti();
