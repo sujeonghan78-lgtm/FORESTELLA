@@ -210,9 +210,10 @@ document.getElementById('completeImg').src = CFG.completeImage;
 document.getElementById('doneImg').src     = CFG.completeImage;
 
 /* ── State ── */
-var done = {};   // completed line indices
-var cur  = 0;    // current line index
-var ans  = [];   // array of words placed so far
+var done     = {};  // completed line indices
+var cur      = 0;   // current line index
+var ans      = [];  // words placed so far
+var srcWords = [];  // shuffled source words (set once per loadLine)
 
 /* ── Boot ── */
 buildTabs();
@@ -237,8 +238,9 @@ function buildTabs(){
 
 /* ── Load line ── */
 function loadLine(idx){
-  ans = [];
-  cur = idx;
+  ans      = [];
+  cur      = idx;
+  srcWords = shuffle(CFG.lines[idx].words.slice()); // shuffle ONCE here
   document.getElementById('lineTitle').textContent = CFG.lines[idx].label + ' — 순서대로 배치하세요';
   renderSlots();
   renderSrc();
@@ -261,7 +263,16 @@ function renderSlots(){
           e.stopPropagation();
           ans.splice(idx, 1);
           renderSlots();
-          renderSrc();
+          // update used state on src buttons
+          var words   = CFG.lines[cur].words;
+          var buttons = document.querySelectorAll('#srcArea .word-btn');
+          var usedCount = {};
+          ans.forEach(function(a){ usedCount[a]=(usedCount[a]||0)+1; });
+          buttons.forEach(function(btn){
+            var bw    = btn.textContent;
+            var avail = words.filter(function(x){return x===bw;}).length;
+            btn.classList.toggle('used', (usedCount[bw]||0) >= avail);
+          });
         };
       })(i);
     } else if(i === ans.length){
@@ -280,19 +291,17 @@ function renderSlots(){
 
 /* ── Render source words ── */
 function renderSrc(){
-  var area = document.getElementById('srcArea');
+  var area  = document.getElementById('srcArea');
   area.innerHTML = '';
   var words = CFG.lines[cur].words;
 
-  // shuffle for display (keep original as answer key)
-  var shuffled = shuffle(words.slice());
-
-  shuffled.forEach(function(w){
+  // use pre-shuffled srcWords — do NOT reshuffle here
+  srcWords.forEach(function(w){
     var btn = document.createElement('button');
     btn.className = 'word-btn';
     btn.textContent = w;
 
-    // count how many of this word are already placed
+    // count how many of this word are already placed vs available
     var placed = ans.filter(function(a){ return a===w; }).length;
     var total  = words.filter(function(x){ return x===w; }).length;
     if(placed >= total) btn.classList.add('used');
@@ -300,7 +309,6 @@ function renderSrc(){
     btn.onclick = function(){
       if(btn.classList.contains('used')) return;
       placeWord(w);
-      // animate button
       btn.classList.add('selected');
       setTimeout(function(){ btn.classList.remove('selected'); }, 180);
     };
@@ -322,7 +330,22 @@ function placeWord(w){
   if(ans.length >= total) return;
   ans.push(w);
   renderSlots();
-  renderSrc();
+
+  // Update 'used' state on existing src buttons (no full re-render = no flash)
+  var words   = CFG.lines[cur].words;
+  var buttons = document.querySelectorAll('#srcArea .word-btn');
+  // reset used, then recount
+  var usedCount = {};
+  ans.forEach(function(a){ usedCount[a] = (usedCount[a]||0)+1; });
+  var shownCount = {};
+  buttons.forEach(function(btn){
+    var bw    = btn.textContent;
+    var avail = words.filter(function(x){ return x===bw; }).length;
+    shownCount[bw] = (shownCount[bw]||0)+1;
+    var placed = usedCount[bw]||0;
+    btn.classList.toggle('used', placed >= avail);
+  });
+
   burst(window.innerWidth/2, window.innerHeight*0.55);
 }
 
